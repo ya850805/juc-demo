@@ -17,12 +17,27 @@ package org.example.locks;
  *
  *  synchronized靜態同步方法
  *      ACC_STATIC, ACC_SYNCHRONIZED 方問標誌區分該方法是否靜態同步方法(看要使用類鎖還是對象鎖)
+ *
+ * *********************************************************************************************
+ *
+ *  管程monitor
+ *
+ *  為什麼每一個對象都可以成為一個鎖？
+ *      => 每個對象天生都帶著一個對象監視器(ObjectMonitor)，每一個被鎖住的對象都會和Monitor關聯起來
+ *
+ *      ObjectMonitor有幾個關鍵屬性
+ *          * _owner：指向持有ObjectMonitor對象的線程
+ *          * _WaitSet：存放處於wait狀態的線程隊列
+ *          * _EntryList：存放處於等待鎖block狀態的線程隊列
+ *          * _recursions：鎖的重入次數
+ *          * _count：用來紀錄該線程獲取鎖的次數
  **/
 public class LockSyncDemo {
     Object object = new Object();
+    Book b1 = new Book();
 
     public void m1() {
-        synchronized (object) {
+        synchronized (b1) {
             System.out.println("---hello synchronized code block");
         }
     }
@@ -38,4 +53,8 @@ public class LockSyncDemo {
     public static void main(String[] args) {
 
     }
+}
+
+class Book {
+
 }
