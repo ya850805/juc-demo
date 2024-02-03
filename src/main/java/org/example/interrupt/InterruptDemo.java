@@ -48,8 +48,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *      2) 通過AtomicBoolean實現 => 見 useAtomicBooleanVar() 方法範例
  *      3) 通過Thread類自帶的中斷API實例方法實現
  *          在需要中斷的線程中不斷監聽中斷狀態，一但發生中斷，就執行相應的中斷處理業務邏輯stop線程
- *  2. 當前線程的中斷標示為true，是不是線程就立刻停止？
- *  3. 靜態方法Thread.interrupted()，談談你的理解
+ *  2. 當前線程的中斷標示為true，是不是線程就立刻停止？ => NO，可以參考InterruptDemo2 & InterruptDemo3
+ *  3. 靜態方法Thread.interrupted()，談談你的理解 => 參考InterruptDemo4
  **/
 public class InterruptDemo {
     static volatile boolean isStop = false;
