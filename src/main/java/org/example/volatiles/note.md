@@ -43,3 +43,4 @@
   2. StoreStore(Store1;StoreStore;Store2)：在Store2以及其後的寫操作執行之前，保證Store1的寫操作已經刷新到主內存
   3. LoadStore(Load1;LoadStore;Store2)：在Store2以及其後的寫操作執行前，保證Load1的讀操作已讀取結束
   4. StoreLoad(Store1;StoreLoad;Load2)：保證Store1的寫操作已經刷新到主內存之後，Load2以及其後的讀操作才能執行
+
