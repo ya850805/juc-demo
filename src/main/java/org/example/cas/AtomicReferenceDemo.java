@@ -21,8 +21,8 @@ public class AtomicReferenceDemo {
         //初始值
         atomicReference.set(z3);
 
-        System.out.println(atomicReference.compareAndSet(z3, li4) + "\t" + atomicReference.get().toString());
-        System.out.println(atomicReference.compareAndSet(z3, li4) + "\t" + atomicReference.get().toString());
+        System.out.println(atomicReference.compareAndSet(z3, li4) + "\t" + atomicReference.get().toString()); //true	User(userName=li4, age=28)
+        System.out.println(atomicReference.compareAndSet(z3, li4) + "\t" + atomicReference.get().toString()); //false	User(userName=li4, age=28)
     }
 }
 
