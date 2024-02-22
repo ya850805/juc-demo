@@ -8,3 +8,16 @@
   ![img.png](img.png)
   * base變量：低並發，直接累加到該變量上
   * Cell[]數組：高並發，累加到各個線程自己的槽Cell[i]中
+
+## 源碼分析
+LongAdder在無競爭的情況下，和AtomicLong一樣，對同一個base進行操作，當出現競爭關係時則是採用**化整為零分散熱點的做法**，用空間換時間，用一個數組cells，將一個value拆分進這個cells數組。<br>
+多個線程需要同時對value進行操作時，可以對線程id進行hash得到hash值，再根據hash值映射到這個cells數組的某個下標，再對該下標所對應的值進行自增操作。<br>
+當所有線程操作完畢，將數組cells的所有值和base加起來作為最終結果。
+
+### `add()`
+![img_1.png](img_1.png)
+1. 如果Cells表為空，嘗試用CAS更新base字段，成功則退出
+2. 如果Cells表為空，CAS更新base字段失敗，出現競爭，`uncontended`為true，調用`longAccumulate()`(新建數組)
+3. 如果Cells表非空，但當前線程映射的槽為空，`uncontended`為true，調用`longAccumulate()`(初始化)
+4. 如果Cells表非空，且當前線程映射的槽非空，CAS更新Cell的值，成功則返回，否則`uncontended`設為false，調用`longAccumulate()`(擴容)
+
