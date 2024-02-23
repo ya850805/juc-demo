@@ -21,3 +21,26 @@ LongAdder在無競爭的情況下，和AtomicLong一樣，對同一個base進行
 3. 如果Cells表非空，但當前線程映射的槽為空，`uncontended`為true，調用`longAccumulate()`(初始化)
 4. 如果Cells表非空，且當前線程映射的槽非空，CAS更新Cell的值，成功則返回，否則`uncontended`設為false，調用`longAccumulate()`(擴容)
 
+### `longAccumulate()`
+![img_2.png](img_2.png)
+先給當前分配一個hash值，然後進入一個`for`自旋，這個自旋分為3個分支
+* CASE1: Cell[]數組已經初始化
+* CASE2: Cell[]數組尚未初始化(首次新建)
+* CASE3: Cell[]數組正在初始化中
+
+![img_3.png](img_3.png)
+
+### `sum()`
+![img_4.png](img_4.png)
+* 為什麼在并發環境下sum值會不精確？
+    * sum執行時，並沒有限制對base和cells的更新，所以LongAdder不是強一致性的，他是最終一致性的
+
+## 總結
+* `AtomicLong`
+  * 線程安全，可以允許一些性能消耗，要求高精度時可以使用
+  * 保證精度，性能代價
+  * AtomicLong是多線程針對單個熱點值value進行原子操作
+* `LongAdder`
+  * 當需要在高并發下有較好的性能表現，且對精確度要求不高時，可以使用
+  * 保證性能，精度代價
+  * LongAdder是每個線程擁有自己的槽，各個線程一般只對自己槽中的那個值進行CAS操作
