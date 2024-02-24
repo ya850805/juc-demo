@@ -16,3 +16,13 @@ ThreadLocal實例通常是類中的私有靜態字段，使用他的目的是希
 如何才能不爭搶？
 1. 加入`synchronized`或者`Lock`控制資源的訪問順序
 2. 使用`ThreadLocal`人手一份
+
+## `Thread`、`ThreadLocal`、`ThreadLocalMap`
+![img.png](img.png)
+
+* `ThreadLocalMap`實際上就是一個以`ThreadLocal`為key，任意對象為value的Entry對象。
+* 當我們為`ThreadLocal`變量賦值，實際上就是以當前`ThreadLocal`實例為key，值為value的Entry往這個`ThreadLocalMap`中存放。
+
+![img_1.png](img_1.png)
+JVM內部維護了一個線程版的`Map<ThreadLocal, Value>`(通過`ThreadLocal`對象的`set()`方法，把`ThreadLocal`對象自己當作key，放進`ThreadLocalMap`中)，
+每個線程要用到這個`T`的時候，用**當前的線程**去`Map`中獲取，**通過這樣讓每個線程都擁有自己獨立的變量**。
