@@ -1,6 +1,7 @@
 package org.example.threadlocal;
 
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -11,7 +12,20 @@ import java.util.concurrent.TimeUnit;
 public class ReferenceDemo {
     public static void main(String[] args) {
 //        strongReference();
+//        softReference();
 
+        WeakReference<MyObject> weakReference = new WeakReference<>(new MyObject());
+
+        System.out.println("before gc: " + weakReference.get());
+
+        //呼叫垃圾回收並等待他執行
+        System.gc();
+        try { TimeUnit.SECONDS.sleep(1); } catch (InterruptedException e) { e.printStackTrace(); }
+
+        System.out.println("after gc: " + weakReference.get());
+    }
+
+    private static void softReference() {
         SoftReference<MyObject> softReference = new SoftReference<>(new MyObject());
         System.out.println("---- softReference: " + softReference.get());
 
