@@ -86,3 +86,71 @@ JVM內部維護了一個線程版的 `Map<ThreadLocal, Value>`(通過 `ThreadLoc
 #### GCRoots和四大引用小總結
 
 ![img_3.png](img_3.png)
+
+### 為什麼要用弱引用？不用會如何？
+
+```java=
+public static void main(String[] args) {
+    ThreadLocal<String> tl = new ThreadLocal<>(); //line1
+    tl.set("abc"); //line2
+    tl.get(); //line3
+}
+```
+
+> line1新建了一個ThreadLocal對象，tl是強引用指向這個對象
+> line2調用set()方法後新建一個Entry，通過源碼可以知道Entry對象裡的k是弱引用指向這個對象
+
+![img_4.png](img_4.png)
+
+#### 為什麼使用弱引用？
+
+當上方的`main()`執行完畢後，棧銷毀強引用`tl`也就沒有了，但此時線程的`ThreadLocalMap`李某個Entry的key還指向這個對象，
+
+* 若這個key引用是**強引用**，就會導致key指向的`ThreadLocal`對象及v指向的對象不能被gc回收，造成內存泄露。
+* 若這個key引用是**弱引用**，就會大概率減少內存泄露的問題(還有一個key為`null`的雷)，使用弱引用就可以使`ThreadLocal`對象在方法執行完畢後順利被回收且Entry的**key引用指向為`null`**。
+
+> 此後我們調用`get()`,`set()`或`remove()`方法時，就會嘗試刪除key為`null`的Entry，可以釋放value對象所佔用的內存
+
+#### 使用弱引用就好了嗎？
+
+##### key為`null`的Entry
+
+1. 當我們為`ThreadLocal`變量賦值，實際上就是當前的Entry(`ThreadLocal`實例為key，值為value)往這個`ThreadLocalMap`中存放，Entry中的key是弱引用，當`ThreadLocal`外部強引用被設置為`null(tl = null)`，那麼系統GC的時候，根據可達性分析，這個`ThreadLocal`實例就沒有任何一條鏈路能夠引用到他，這個`ThreadLocal`勢必會被回收。這樣一來，**`ThreadLocalMap`中就會出現key為`null`的Entry，就沒有辦法訪問這個key為`null`的Entry的value，如果當前線程遲遲不結束，這個key為`null`的Entry的value就會一直存在一條強引用鏈：Thread Ref -> Thread -> ThreadLocalMap -> Entry -> value永遠無法回收，造成內存泄露**。
+2. 當然如果當前thread運行結束，threadLocal, threadLocalMap, Entry沒有引用鏈可達，在垃圾回收的時候都會被系統進行回收。
+3. 但實際使用中我們會使用**線程池**去維護我們的線程，比如在`Executors.newFixedThreadPool()`時創建線程的時候，為了重複使用線程是不會結束的，所有`ThreadLocal`內存泄露就需要小心。
+
+![img_5.png](img_5.png)
+
+`ThreadLocalMap`使用`ThreadLocal`的弱引用作為key，如果一個`ThreadLocal`沒有外部強引用引用他，那麼系統gc的時候，這個`ThreadLocal`勢必會被回收，這樣一揚，`ThreadLocalMap`中就會出現**key為`null`的Entry**，就沒有辦法訪問這些key為null的Entry的value，如果當前線程遲遲不結束，這些**key為`null`的Entry的value就會一直存在一條強引用鏈**。
+
+雖然弱引用保證了key指向`ThreadLocal`對象能被回收，但是v指向的value對象是需要`ThreadLocalMap`調用`get()`, `set()`時發現key為`null`時才會去回收整個entry、value。因此若引用不能100%保證內存不洩漏。**我們要在不使用某個`ThreadLocal`對象後，手動調用`remove()`方法來刪除他**，尤其是在線程池中，不僅僅是內存泄露的問題，因為線程池中的線程是重複使用的，意味著這個線程的`ThreadLocalMap`對象也是重複使用的，如果我們不手動調用`remove()`方法，那麼後面的線程就有可能獲取到上個線程遺留下的value值，造成bug。
+
+##### `set`, `get`方法會檢查所有key為`null`的Entry對象
+
+* `set`
+  ![img_6.png](img_6.png)
+* `get`
+  ![img_7.png](img_7.png)
+* `remove`
+  ![img_8.png](img_8.png)
+
+##### 結論
+
+從前面的`set`,`getEntry`,`remove`方法看出，在`ThreadLocal`的生命週期裡，針對`ThreadLocal`存在的內存洩漏的問題，都會通過`expungeStaleEntry`,`cleanSomeSlots`,`replaceStateEntry`這3個方法清理掉key為`null`的髒Entry。
+
+## 小總結
+
+### 最佳實踐
+
+* `ThreadLocal`一定要初始化，避免空指針:point_right:`ThreadLocal.withInitial(() -> 初始化值)`。
+* 建議把`ThreadLocal`修飾為`static`。
+* **用完記得手動`remove()`**。
+
+### 總結
+
+* `ThreadLocal`並不解決線程間共享數據的問題。
+* `ThreadLocal`適用於變量在線程間隔離且在方法間公想的場境。
+* `ThreadLocal`隱式的在不同線程內創建獨立實例副本避免了實例線程安全的問題。
+* 每個線程池有一個屬於自己的Map並維護了`ThreadLocal`對象與具體實例的映射，該Map由於只被持有他的線程訪問，故不存在線程安全以及鎖的問題。
+* `ThreadLocalMap`的Entry對`ThreadLocal`的引用為弱引用，避免了`ThreadLocal`對象無法被回收的問題。
+* 都會通過`expungeStaleEntry`,`cleanSomeSlots`,`replaceStateEntry`這3個方法回收鍵為`null`的Entry對象的值(即具體實例)以及Entry對象本身從而防止內存洩漏，屬於安全加固的方法。
