@@ -1,7 +1,8 @@
 package org.example.threadlocal;
 
-import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
+import java.lang.ref.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -13,7 +14,42 @@ public class ReferenceDemo {
     public static void main(String[] args) {
 //        strongReference();
 //        softReference();
+//        weakReference();
+        phantomReference();
+    }
 
+    private static void phantomReference() {
+        MyObject myObject = new MyObject();
+        ReferenceQueue<MyObject> referenceQueue = new ReferenceQueue<>();
+        PhantomReference<MyObject> phantomReference = new PhantomReference<>(myObject, referenceQueue);
+//        System.out.println(phantomReference.get());
+
+        //這邊設置runtime虛擬機參數設置內存
+        /**
+         * -Xms10m -Xmx10m
+         */
+
+        //模擬用光內存
+        List<byte[]> list = new ArrayList<>();
+        new Thread(() -> {
+            while(true) {
+                list.add(new byte[1 * 1024 * 1024]);
+                try { TimeUnit.MILLISECONDS.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
+                System.out.println(phantomReference.get() + "\t" + "list add done");
+            }
+        }, "t1").start();
+
+        new Thread(() -> {
+            while (true) {
+                Reference<? extends MyObject> reference = referenceQueue.poll();
+                if(null != reference) {
+                    System.out.println("----有虛引用對象回收加入了對列");
+                }
+            }
+        }, "t2").start();
+    }
+
+    private static void weakReference() {
         WeakReference<MyObject> weakReference = new WeakReference<>(new MyObject());
 
         System.out.println("before gc: " + weakReference.get());
