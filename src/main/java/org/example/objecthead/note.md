@@ -31,3 +31,10 @@ class Customer {
 ## 對象頭Mark Word
 
 ![image.png](./assets/1709008975984-image.png)
+
+
+## JOL
+
+### 運行結果
+
+![image.png](./assets/1709009963949-image.png)
