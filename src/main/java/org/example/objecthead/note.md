@@ -38,3 +38,10 @@ class Customer {
 ### 運行結果
 
 ![image.png](./assets/1709009963949-image.png)
+
+### 壓縮指針
+
+* `java -XX:+PrintCommandLineFlags -version`：查看當前虛擬機信息
+* 使用上面的命令，可以看到默認開啟壓縮指針，開啟後**類型指針**壓縮為4字節，以節約空間
+  ![image.png](./assets/1709013784178-image.png)
+* 收動關閉壓縮指針：運行程序時加上參數 `-XX: -UseCompressedClassPointers`
