@@ -18,3 +18,11 @@
   * 偏向鎖：Mark Word存儲的是偏向的線程ID
   * 輕量鎖：Mark Word存儲的是指向線程棧中的Lock Record的指針
   * 重量鎖：Mark Word存儲的是指向堆中的Monitor對象的指針
+
+### 無鎖
+
+初始狀態，一個對象被實例化後，如果還沒有被任何線程競爭鎖，那他就為無鎖狀態(**001**)
+
+HashCode是由每組字節由右下往左上看的
+
+![image.png](./assets/1709093089109-image.png)
