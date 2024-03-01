@@ -13,7 +13,27 @@ public class SynchronizedUpDemo {
     public static void main(String[] args) {
 //        noLock();
 //        biasedLock();
+//        lightLock();
 
+        heavyLock();
+    }
+
+    private static void heavyLock() {
+        Object o = new Object();
+        new Thread(() -> {
+            synchronized (o) {
+                System.out.println(ClassLayout.parseInstance(o).toPrintable());
+            }
+        }, "t1").start();
+
+        new Thread(() -> {
+            synchronized (o) {
+                System.out.println(ClassLayout.parseInstance(o).toPrintable());
+            }
+        }, "t2").start();
+    }
+
+    private static void lightLock() {
         //關閉偏向鎖    -XX:-UseBiasedLocking  就會直接使用輕量級鎖
         Object o = new Object();
         new Thread(() -> {

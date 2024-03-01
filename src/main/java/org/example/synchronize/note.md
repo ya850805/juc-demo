@@ -113,3 +113,15 @@ Object o = new Object();
 
 * 爭奪輕量鎖失敗時，會自旋嘗試搶佔鎖。
 * 輕量鎖每次退出同步塊都需要釋放鎖，而偏向鎖是在競爭發生時才釋放鎖。
+
+
+### 重量級鎖
+
+有大量的線程參與鎖的競爭，衝突性很高。
+
+#### 原理
+
+![image.png](./assets/1709261703095-image.png)
+Java中的synchronized重量級鎖，是基於進入和退出Monitor對象實現的，在編譯時會將同步塊的開始位置插入monitor enter指令，在結束位置插入monitor exit指令。
+
+當線程執行到monitor enter指令時，會嘗試獲取對象對應的Monitor所有權，如果獲取到了，即獲取到了鎖，會在Monitor的owner中存放當前線程的ID，這樣他將處於鎖定狀態，除非退出同步塊，否則其他線程無法獲取到這個Monitor。
