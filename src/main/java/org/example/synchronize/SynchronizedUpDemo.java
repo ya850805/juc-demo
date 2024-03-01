@@ -12,8 +12,15 @@ import java.util.concurrent.TimeUnit;
 public class SynchronizedUpDemo {
     public static void main(String[] args) {
 //        noLock();
+//        biasedLock();
 
-        biasedLock();
+        //關閉偏向鎖    -XX:-UseBiasedLocking  就會直接使用輕量級鎖
+        Object o = new Object();
+        new Thread(() -> {
+            synchronized (o) {
+                System.out.println(ClassLayout.parseInstance(o).toPrintable());
+            }
+        }, "t1").start();
     }
 
     private static void biasedLock() {

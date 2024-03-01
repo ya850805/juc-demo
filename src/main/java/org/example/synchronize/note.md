@@ -91,3 +91,25 @@ HashCode是由每組字節由右下往左上看的
 ![image.png](./assets/1709170629276-image.png)
 
 ![image.png](./assets/1709170936290-image.png)
+
+#### 案例
+
+```java=
+//關閉偏向鎖    -XX:-UseBiasedLocking  就會直接使用輕量級鎖
+Object o = new Object();
+    new Thread(() -> {
+        synchronized (o) {
+            System.out.println(ClassLayout.parseInstance(o).toPrintable());
+        }
+}, "t1").start();
+```
+
+自旋達到一定次數和程度(Java6之後是**自旋自適應鎖**)
+
+* 線程如果自旋成功了，那下次自旋的最大次數會**增加**，因為JVM認為既然上次成功了，那麼這次也大機率會成功。
+* 如果很少自旋成功，那麼下次會**減少**自旋的次數甚至不自旋，避免CPU空轉。
+
+輕量鎖和偏向鎖的區別：
+
+* 爭奪輕量鎖失敗時，會自旋嘗試搶佔鎖。
+* 輕量鎖每次退出同步塊都需要釋放鎖，而偏向鎖是在競爭發生時才釋放鎖。
