@@ -153,3 +153,10 @@ synchronized在修飾方法和代碼塊在字節碼上實現方式有很大的�
 JDK 1.6之前synchronized使用的是重量級鎖，JDK1.6之後進行了優化，**擁有了無鎖->偏向鎖->輕量級鎖->重量級鎖的升級過程**，而不是什麼情況都用重量級鎖。
 
 ![image.png](./assets/1709342367230-image.png)
+
+
+## JIT編譯器對鎖的優化
+
+### JIT
+
+Just In Time Compiler，即時編譯器
