@@ -14,8 +14,41 @@ public class SynchronizedUpDemo {
 //        noLock();
 //        biasedLock();
 //        lightLock();
+//        heavyLock();
 
-        heavyLock();
+//        lockWithHashCode01();
+        lockWithHashCode02();
+    }
+
+    /**
+     * 偏向鎖過程中遇到identity hash code計算請求，立馬撤銷偏向模式，膨脹為重量級鎖
+     */
+    private static void lockWithHashCode02() {
+        try { TimeUnit.SECONDS.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
+        Object o = new Object();
+        synchronized (o) {
+            o.hashCode(); //
+            System.out.println("偏向鎖過程中遇到identity hash code計算請求，立馬撤銷偏向模式，膨脹為重量級鎖");
+            System.out.println(ClassLayout.parseInstance(o).toPrintable());
+        }
+    }
+
+    /**
+     *  當一個對象已經計算過identity hash code，他就無法進入偏向鎖狀態，跳過偏向鎖，直接升級輕量級鎖
+     */
+    private static void lockWithHashCode01() {
+        //先休眠5s，保證開啟偏向鎖
+        try { TimeUnit.SECONDS.sleep(5); } catch (InterruptedException e) { e.printStackTrace(); }
+        Object o = new Object();
+        System.out.println("本應是偏向鎖");
+        System.out.println(ClassLayout.parseInstance(o).toPrintable());
+
+        o.hashCode(); // 當一個對象已經計算過identity hash code，他就無法進入偏向鎖狀態
+
+        synchronized (o) {
+            System.out.println("本應是偏向鎖，但由於計算過identity hash code，會直接升級為輕量級鎖");
+            System.out.println(ClassLayout.parseInstance(o).toPrintable());
+        }
     }
 
     private static void heavyLock() {

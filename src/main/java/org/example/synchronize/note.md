@@ -125,3 +125,17 @@ Object o = new Object();
 Java中的synchronized重量級鎖，是基於進入和退出Monitor對象實現的，在編譯時會將同步塊的開始位置插入monitor enter指令，在結束位置插入monitor exit指令。
 
 當線程執行到monitor enter指令時，會嘗試獲取對象對應的Monitor所有權，如果獲取到了，即獲取到了鎖，會在Monitor的owner中存放當前線程的ID，這樣他將處於鎖定狀態，除非退出同步塊，否則其他線程無法獲取到這個Monitor。
+
+
+### 總結
+
+![image.png](./assets/1709340434477-image.png)
+
+#### 鎖升級後，哈希碼去哪了
+
+![image.png](./assets/1709340660844-image.png)
+
+* **無鎖**狀態下，Mark Word中可以存儲對象的identity hash code值。當對象的`hashCode()`方法第一次被調用時，JVM會生成對應的identity hash code值並將該值存儲到Mark Word中。
+* 對於**偏向鎖**，在線程獲取偏向鎖時，會用Thread ID和epoch值(理解為時間戳)覆蓋identity hash code所在的位置。**如果一個對象的`hashCode()`方法已經被調用過一次，這個對象不能被設置偏向鎖**。因為如果可以的話，那Mark Word中的identity hash code必然會被偏向線程id覆蓋，就會造成同一個對象前後兩次調用`hashCode()`方法得到的結果不一樣。
+* 升級為**輕量鎖**時，JVM會在當前線程的棧中創建一個鎖紀錄(Lock Record)空間，用於存儲鎖對象的Mark Word拷貝，該拷貝中可以包含identity hash code，所以**輕量級鎖可以和identity hash code共存**，哈希碼和GC年齡自然保存在此，釋放鎖後會將這些信息寫回到對象頭。
+* 升級為**重量鎖**時，Mark Word保存的重量級鎖指針，代表重量級鎖的ObjectMonitor類中有字段紀錄非加鎖狀態下的Mark Word，鎖釋放後也會將信息寫回到對象頭。
