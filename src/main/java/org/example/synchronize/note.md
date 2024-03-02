@@ -139,3 +139,17 @@ Java中的synchronized重量級鎖，是基於進入和退出Monitor對象實現
 * 對於**偏向鎖**，在線程獲取偏向鎖時，會用Thread ID和epoch值(理解為時間戳)覆蓋identity hash code所在的位置。**如果一個對象的`hashCode()`方法已經被調用過一次，這個對象不能被設置偏向鎖**。因為如果可以的話，那Mark Word中的identity hash code必然會被偏向線程id覆蓋，就會造成同一個對象前後兩次調用`hashCode()`方法得到的結果不一樣。
 * 升級為**輕量鎖**時，JVM會在當前線程的棧中創建一個鎖紀錄(Lock Record)空間，用於存儲鎖對象的Mark Word拷貝，該拷貝中可以包含identity hash code，所以**輕量級鎖可以和identity hash code共存**，哈希碼和GC年齡自然保存在此，釋放鎖後會將這些信息寫回到對象頭。
 * 升級為**重量鎖**時，Mark Word保存的重量級鎖指針，代表重量級鎖的ObjectMonitor類中有字段紀錄非加鎖狀態下的Mark Word，鎖釋放後也會將信息寫回到對象頭。
+
+#### 鎖的優缺點對比
+
+![image.png](./assets/1709342110237-image.png)
+
+synchronized鎖升級總結：**先自旋，不行再阻塞**。
+
+實際上是把之前的悲觀鎖(重量級鎖)變成在一定條件下使用偏向鎖即使用輕量級鎖(自旋鎖CAS)的形式。
+
+synchronized在修飾方法和代碼塊在字節碼上實現方式有很大的差異，但是內部實現還是基於對象頭的Mark Word來實現的。
+
+JDK 1.6之前synchronized使用的是重量級鎖，JDK1.6之後進行了優化，**擁有了無鎖->偏向鎖->輕量級鎖->重量級鎖的升級過程**，而不是什麼情況都用重量級鎖。
+
+![image.png](./assets/1709342367230-image.png)
