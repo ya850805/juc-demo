@@ -160,3 +160,7 @@ JDK 1.6之前synchronized使用的是重量級鎖，JDK1.6之後進行了優化�
 ### JIT
 
 Just In Time Compiler，即時編譯器
+
+### 鎖消除
+
+### 鎖粗化
