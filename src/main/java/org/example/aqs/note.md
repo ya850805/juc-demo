@@ -60,7 +60,6 @@ CLH：是一個單向鏈表，AQS中的對列是CLH變體的**虛擬雙向對列
 
 ![image.png](./assets/1709438664670-image.png)
 
-
 ## AQS源碼分析前置知識
 
 ### AQS內部體系架構圖
@@ -98,3 +97,59 @@ AQS的同步狀態`state`成員變量，類似銀行辦理業務的受理狀態
 ![image.png](./assets/1709439768972-image.png)
 
 ![image.png](./assets/1709439794115-image.png)
+
+## AQS源碼分析
+
+`Lock`接口的實現類，基本都是通過了**聚合了一個隊列同步器的子類**完成線程訪問控制的。
+
+### `ReentrantLock`
+
+![image.png](./assets/1709532091804-image.png)
+
+#### 從`lock()`方法看公平鎖、非公平鎖
+
+![image.png](./assets/1709532427530-image.png)
+
+![image.png](./assets/1709532663026-image.png)
+
+💡**公平鎖和非公平鎖的`lock()`方法唯一的區別在於公平鎖在獲取同步狀態時多了一個限制條件：`hasQueuedPredecessors()`，該方法是公平鎖加鎖時判斷等待隊列中是否存在有效節點的方法**。
+
+#### 以非公平鎖`ReentrantLock()`為例，看`lock()`方法
+
+對比公平鎖和非公平鎖的`tryAcquire()`方法的實現代碼，其實差別就在於非公平鎖獲取鎖時比公平鎖少了一個判斷`!hasQueuedPredecessors()`，`hasQueuedPredecessors()`中判斷了是否需要排隊，導致公平鎖和非公平鎖的差異如下：
+
+* 公平鎖：公平鎖講究先來先到，線程在獲取鎖時，如果這個鎖的等待隊列中已經有線程在等待，那麼當前線程就會進入等待隊列中。
+* 非公平鎖：不管是否有等待隊列，如果可以獲取鎖，則立刻佔有鎖對象。也就是說隊列的第一個排隊線程甦醒後，不一定就是排頭的這個線程獲取鎖，他還是需要參加競爭鎖(存在線程競爭的情況下)，後來的線程可能插隊奪取鎖。
+
+![image.png](./assets/1709533525044-image.png)
+
+在創建完公平鎖/非公平鎖後，調用`lock()`方法會進行加鎖，最終都會調用到`acquire`方法。
+
+##### `acquire()`
+
+![image.png](./assets/1709534786930-image.png)
+
+##### `tryAcquire(arg)`
+
+![image.png](./assets/1709536556822-image.png)
+
+* 返回`false`：繼續推進條件，走下一個`acquireQueued(addWaiter(Node.EXCLUSIVE), args)`方法。
+* 返回`true`：結束
+
+##### `addWaiter(Node.EXCLUSIVE)`，參加排隊
+
+![image.png](./assets/1709538693415-image.png)
+
+⚠️在雙向鏈表中，第一個節點為**虛擬節點(也叫哨兵節點)**，其實不存儲任何信息，只是佔位。**真正的第一個有數據的節點是第二個節點開始的**。
+
+假如此時有線程C進入：
+
+![image.png](./assets/1709539127540-image.png)
+
+##### `acquireQueued(addWaiter(Node.EXCLUSIVE), args)`，坐穩隊列
+
+![image.png](./assets/1709539554464-image.png)
+
+##### 示意圖
+
+![image.png](./assets/1709540392970-image.png)
