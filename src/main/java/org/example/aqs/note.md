@@ -154,7 +154,6 @@ AQS的同步狀態`state`成員變量，類似銀行辦理業務的受理狀態
 
 ![image.png](./assets/1709540392970-image.png)
 
-
 ### `unlock()`
 
 ![image.png](./assets/1709608634263-image.png)
