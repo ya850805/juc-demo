@@ -61,3 +61,10 @@ stamp(戳記，`long`類型)：代表鎖的狀態。當stamp返回0時，表示�
   * **Optimistic Reading(樂觀讀模式)**：無鎖機制，類似於數據庫中的樂觀鎖，支持讀寫并發，**很樂觀認為讀取時沒人修改，假如被修改再實現升級為悲觀讀模式**。
 
 💡**讀的過程中也允許寫鎖介入**
+
+
+### `StampedLock`缺點
+
+* `StampedLock`不支持重入，沒有Re開頭。
+* `StampedLock`的悲觀讀鎖和寫鎖都不支持條件變量(Condition)，這個也需要注意。
+* 使用`StampedLock`一定不要調用中斷操作，即不要調用`interrupt()`方法。
